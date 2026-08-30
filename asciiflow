@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ASCIIFLOW_ROOT="${ASCIIFLOW_ROOT:-$SCRIPT_DIR}"
+
+if [[ ! -f "$ASCIIFLOW_ROOT/src/core.sh" ]]; then
+  local_root="$HOME/.local/share/asciiflow"
+  if [[ -f "$local_root/src/core.sh" ]]; then
+    ASCIIFLOW_ROOT="$local_root"
+  fi
+fi
+
+source "$ASCIIFLOW_ROOT/src/core.sh"
+source "$ASCIIFLOW_ROOT/src/colors.sh"
+source "$ASCIIFLOW_ROOT/src/styles.sh"
+source "$ASCIIFLOW_ROOT/src/storage.sh"
+source "$ASCIIFLOW_ROOT/src/ui.sh"
+
+main "$@"
