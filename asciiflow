@@ -8,6 +8,9 @@ if [[ ! -f "$ASCIIFLOW_ROOT/src/core.sh" ]]; then
   local_root="$HOME/.local/share/asciiflow"
   if [[ -f "$local_root/src/core.sh" ]]; then
     ASCIIFLOW_ROOT="$local_root"
+  else
+    printf 'Error: ASCIIFlow runtime files were not found.\n' >&2
+    exit 1
   fi
 fi
 

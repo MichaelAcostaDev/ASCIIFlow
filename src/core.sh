@@ -4,46 +4,39 @@ set -Eeuo pipefail
 ASCIIFLOW_VERSION="0.1.0"
 ASCIIFLOW_STYLE_DEFAULT="block"
 ASCIIFLOW_COLOR_DEFAULT="cyan"
-ASCIIFLOW_GRADIENT_DEFAULT=""
 ASCIIFLOW_DATA_DIR="${XDG_DATA_HOME:-${HOME:-/tmp}/.local/share}/asciiflow"
 
 usage() {
   cat <<'EOF'
-ASCIIFlow 0.1.0
+ASCIIFlow 0.1.1
+
+Generate ASCII banners in your terminal.
 
 Usage:
-  asciiflow [options] [text]
-  asciiflow --save NAME [text]
-  asciiflow --load NAME
+  asciiflow [options] "text"
+  asciiflow -s STYLE "text"
+  asciiflow -S NAME "text"
+  asciiflow -L NAME
 
 Options:
-  --style STYLE        Select a built-in style.
-  --color COLOR        Force a color name or ANSI palette value.
-  --gradient NAME      Apply a gradient preset.
-  --random             Pick a random style and color.
-  --list               List available styles.
-  --preview            Show all built-in styles.
-  --save NAME [text]   Save a banner to XDG storage.
-  --load NAME          Load a previously saved banner.
-  --no-color           Disable colors.
-  --help, -h           Show help.
-  --version, -v        Show the current version.
-
-Examples:
-  asciiflow "Michael"
-  asciiflow --style block "Arch Linux"
-  asciiflow --style minimal "Hello"
-  asciiflow --random
-  asciiflow --list
-  asciiflow --preview
-  asciiflow --save my-banner "Welcome"
-  asciiflow --load my-banner
+  -s, --style STYLE   Use a built-in style
+  -S, --save NAME     Save a banner
+  -L, --load NAME     Load a saved banner
+  -l, --list          List available styles
+  -r, --random        Pick a random style
+  -n, --no-color      Disable ANSI colors
+  -v, --version       Show version
+  -h, --help          Show help
 
 Styles:
   block small minimal banner slant shadow digital
 
-Gradients:
-  sunset ocean aurora fire neon purple
+Examples:
+  asciiflow "Hello"
+  asciiflow --style block "Arch Linux"
+  asciiflow --random "ASCIIFlow"
+  asciiflow --save welcome "Welcome"
+  asciiflow --load welcome
 EOF
 }
 
@@ -52,7 +45,13 @@ version() {
 }
 
 error() {
-  printf 'Error: %s\n' "$1" >&2
+  local message="$1"
+  local show_usage="${2:-}"
+
+  printf 'Error: %s\n' "$message" >&2
+  if [[ "$show_usage" == "usage" ]]; then
+    printf '\nRun '\''asciiflow --help'\'' for usage.\n' >&2
+  fi
   exit 1
 }
 
@@ -63,10 +62,9 @@ trim_text() {
   printf '%s' "$text"
 }
 
-resolve_style() {
-  local requested="${1:-$ASCIIFLOW_STYLE_DEFAULT}"
-  case "$requested" in
-    block|small|minimal|banner|slant|shadow|digital) printf '%s' "$requested" ;;
+is_valid_style() {
+  case "$1" in
+    block|small|minimal|banner|slant|shadow|digital) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -76,85 +74,60 @@ choose_random_style() {
   printf '%s' "${styles[$RANDOM % ${#styles[@]}]}"
 }
 
-choose_random_gradient() {
-  local gradients=(sunset ocean aurora fire neon purple)
-  printf '%s' "${gradients[$RANDOM % ${#gradients[@]}]}"
-}
-
-choose_random_color() {
-  local colors=(red green blue cyan magenta yellow white purple orange)
-  printf '%s' "${colors[$RANDOM % ${#colors[@]}]}"
-}
-
 main() {
   local -a positional=()
   local save_name=""
   local load_name=""
   local style=""
-  local color=""
-  local gradient=""
   local random_mode=0
   local list_mode=0
-  local preview_mode=0
   local help_mode=0
   local version_mode=0
   local no_color=0
-  local text=""
   local raw_text=""
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --style)
-        if [[ $# -lt 2 ]]; then error "missing value for --style"; fi
+      -s|--style)
+        if [[ $# -lt 2 ]]; then
+          error "missing value for --style" "usage"
+        fi
         style="$2"
         shift 2
         ;;
-      --color)
-        if [[ $# -lt 2 ]]; then error "missing value for --color"; fi
-        color="$2"
-        shift 2
-        ;;
-      --gradient)
+      -S|--save)
         if [[ $# -lt 2 ]]; then
-          gradient="sunset"
-          shift
-        else
-          gradient="$2"
-          shift 2
+          error "missing value for --save" "usage"
         fi
-        ;;
-      --random)
-        random_mode=1
-        shift
-        ;;
-      --list)
-        list_mode=1
-        shift
-        ;;
-      --preview)
-        preview_mode=1
-        shift
-        ;;
-      --save)
-        if [[ $# -lt 2 ]]; then error "missing value for --save"; fi
         save_name="$2"
         shift 2
         ;;
-      --load)
-        if [[ $# -lt 2 ]]; then error "missing value for --load"; fi
+      -L|--load)
+        if [[ $# -lt 2 ]]; then
+          error "missing value for --load" "usage"
+        fi
         load_name="$2"
         shift 2
         ;;
-      --no-color)
+      -l|--list)
+        list_mode=1
+        shift
+        ;;
+      -r|--random)
+        random_mode=1
+        shift
+        ;;
+      -n|--no-color)
+        export NO_COLOR=1
         no_color=1
         shift
         ;;
-      --help|-h)
-        help_mode=1
+      -v|--version)
+        version_mode=1
         shift
         ;;
-      --version|-v)
-        version_mode=1
+      -h|--help)
+        help_mode=1
         shift
         ;;
       --)
@@ -163,7 +136,7 @@ main() {
         break
         ;;
       -*)
-        error "unknown option: $1"
+        error "unknown option '$1'" "usage"
         ;;
       *)
         positional+=("$1")
@@ -171,10 +144,6 @@ main() {
         ;;
     esac
   done
-
-  if [[ "$no_color" -eq 1 ]]; then
-    export NO_COLOR=1
-  fi
 
   detect_color_capabilities
 
@@ -188,12 +157,21 @@ main() {
     exit 0
   fi
 
+  if [[ "$list_mode" -eq 1 ]]; then
+    list_styles
+    exit 0
+  fi
+
   if [[ -n "$save_name" ]]; then
     if [[ ${#positional[@]} -eq 0 ]]; then
-      error "missing text for --save"
+      error "missing text for --save" "usage"
     fi
     raw_text="${positional[*]}"
-    save_banner "$save_name" "$raw_text" "$style" "$color" "$gradient"
+    raw_text="$(trim_text "$raw_text")"
+    if [[ -z "$raw_text" ]]; then
+      error "missing text for --save" "usage"
+    fi
+    save_banner "$save_name" "$raw_text" "${style:-block}"
     exit 0
   fi
 
@@ -202,64 +180,36 @@ main() {
     exit 0
   fi
 
-  if [[ "$list_mode" -eq 1 ]]; then
-    list_styles
-    exit 0
-  fi
-
-  if [[ "$preview_mode" -eq 1 ]]; then
-    preview_styles
-    exit 0
-  fi
-
   if [[ "$random_mode" -eq 1 ]]; then
-    if [[ -n "$style" ]]; then
-      style="$style"
-    else
-      style="$(choose_random_style)"
-    fi
-    if [[ -n "$gradient" ]]; then
-      :
-    else
-      gradient="$(choose_random_gradient)"
-    fi
-    if [[ -n "$color" ]]; then
-      :
-    else
-      color="$(choose_random_color)"
-    fi
     raw_text="${positional[*]:-ASCIIFlow}"
+    raw_text="$(trim_text "$raw_text")"
     if [[ -z "$raw_text" ]]; then
       raw_text="ASCIIFlow"
     fi
-    render_banner "$raw_text" "$style" "$color" "$gradient"
+    style="${style:-$(choose_random_style)}"
+    if ! is_valid_style "$style"; then
+      printf 'Error: unknown style '\''%s'\''\n\nAvailable styles:\n  block\n  small\n  minimal\n  banner\n  slant\n  shadow\n  digital\n' "$style" >&2
+      exit 1
+    fi
+    render_banner "$raw_text" "$style" "${ASCIIFLOW_COLOR_DEFAULT:-cyan}"
     exit 0
   fi
 
   if [[ ${#positional[@]} -eq 0 ]]; then
-    error "missing input text"
+    error "missing text" "usage"
   fi
 
   raw_text="${positional[*]}"
   raw_text="$(trim_text "$raw_text")"
   if [[ -z "$raw_text" ]]; then
-    error "missing input text"
+    error "missing text" "usage"
   fi
 
-  if [[ -z "$style" ]]; then
-    style="$ASCIIFLOW_STYLE_DEFAULT"
-  fi
-	if [[ ! -n "$style" ]]; then
-	 style="$ASCIIFLOW_STYLE_DEFAULT"
-	fi
-
-  if [[ -z "$color" ]]; then
-    color="$ASCIIFLOW_COLOR_DEFAULT"
+  style="${style:-$ASCIIFLOW_STYLE_DEFAULT}"
+  if ! is_valid_style "$style"; then
+    printf 'Error: unknown style '\''%s'\''\n\nAvailable styles:\n  block\n  small\n  minimal\n  banner\n  slant\n  shadow\n  digital\n' "$style" >&2
+    exit 1
   fi
 
-  if [[ ! "$style" =~ ^(block|small|minimal|banner|slant|shadow|digital)$ ]]; then
-    error "style '$style' was not found.\nAvailable styles:\n  block\n  small\n  minimal\n  banner\n  slant\n  shadow\n  digital"
-  fi
-
-  render_banner "$raw_text" "$style" "$color" "$gradient"
+  render_banner "$raw_text" "$style" "${ASCIIFLOW_COLOR_DEFAULT:-cyan}"
 }

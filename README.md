@@ -24,23 +24,17 @@ chmod +x install.sh
 ./install.sh
 ```
 
-That installs the tool into `$HOME/.local/bin/asciiflow`.
+The installer places the command in `~/.local/bin/asciiflow`.
 
-If `~/.local/bin` is not in your `PATH`, add this to your shell config:
+If `~/.local/bin` is not in your `PATH`, add this to your shell startup file:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Then verify the installation:
-
-```bash
-asciiflow --version
-```
-
 ## Usage
 
-Generate a banner from text:
+Generate a banner:
 
 ```bash
 asciiflow "Hello"
@@ -53,22 +47,23 @@ asciiflow --style block "Arch Linux"
 asciiflow --style minimal "Hello"
 ```
 
-List available styles:
+Short form:
+
+```bash
+asciiflow -s block "Hello"
+```
+
+List styles:
 
 ```bash
 asciiflow --list
+asciiflow -l
 ```
 
-Preview all styles:
+Random style:
 
 ```bash
-asciiflow --preview
-```
-
-Create a random banner:
-
-```bash
-asciiflow --random
+asciiflow --random "ASCIIFlow"
 ```
 
 Save and load a banner:
@@ -78,39 +73,27 @@ asciiflow --save welcome "Welcome"
 asciiflow --load welcome
 ```
 
-Disable colors:
+Help and version:
 
 ```bash
-asciiflow --no-color "Hello"
-NO_COLOR=1 asciiflow "Hello"
-```
-
-## Examples
-
-```bash
-asciiflow "Michael"
-asciiflow --style block "Linux"
-asciiflow --style minimal "ASCIIFlow"
-asciiflow --random
+asciiflow --help
+asciiflow --version
 ```
 
 ## Options
 
 ```text
---help, -h           Show help
---version, -v        Show version
---style STYLE        Select a built-in style
---color COLOR        Set a color name
---gradient NAME      Apply a gradient preset
---random             Pick a random style and color
---list               List available styles
---preview            Preview each built-in style
---save NAME TEXT     Save a banner to XDG storage
---load NAME          Load a saved banner
---no-color           Disable ANSI colors
+-s, --style STYLE   Use a built-in style
+-S, --save NAME     Save a banner
+-L, --load NAME     Load a saved banner
+-l, --list          List all styles
+-r, --random        Pick a random style
+-n, --no-color      Disable ANSI colors
+-v, --version       Show version
+-h, --help          Show help
 ```
 
-Built-in styles:
+Available styles:
 
 ```text
 block
@@ -122,23 +105,9 @@ shadow
 digital
 ```
 
-Available gradients:
-
-```text
-sunset
-ocean
-aurora
-fire
-neon
-purple
-```
-
 ## Credits
 
 Michael Acosta / MichaelAcostaDev
-
-- GitHub: https://github.com/MichaelAcostaDev
-- LinkedIn: https://www.linkedin.com/in/michael-acosta-dev/
 
 ## License
 
