@@ -1,23 +1,16 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# ASCIIFlow - ASCII Text Banner Generator
+# Main entry point
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASCIIFLOW_ROOT="${ASCIIFLOW_ROOT:-$SCRIPT_DIR}"
 
-if [[ ! -f "$ASCIIFLOW_ROOT/src/core.sh" ]]; then
-  local_root="$HOME/.local/share/asciiflow"
-  if [[ -f "$local_root/src/core.sh" ]]; then
-    ASCIIFLOW_ROOT="$local_root"
-  else
-    printf 'Error: ASCIIFlow runtime files were not found.\n' >&2
-    exit 1
-  fi
-fi
+# Load core modules
+source "${ASCIIFLOW_ROOT}/src/fonts.sh"
+source "${ASCIIFLOW_ROOT}/src/renderer.sh"
+source "${ASCIIFLOW_ROOT}/src/cli.sh"
 
-source "$ASCIIFLOW_ROOT/src/core.sh"
-source "$ASCIIFLOW_ROOT/src/colors.sh"
-source "$ASCIIFLOW_ROOT/src/styles.sh"
-source "$ASCIIFLOW_ROOT/src/storage.sh"
-source "$ASCIIFLOW_ROOT/src/ui.sh"
-
-main "$@"
+# Run the CLI parser
+parse_cli "$@"

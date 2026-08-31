@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^bash -c 'cd \"/mnt/c/Users/micha/OneDrive/Escritorio/programacion/Linux/ASCIIFlow\" && bash asciiflow --help 2>&1'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
